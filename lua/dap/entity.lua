@@ -95,6 +95,32 @@ function variable.fetch_children(var, cb)
 end
 
 
+local function set_variable(_, item, _, context)
+  local session = require('dap').session()
+  if not session then
+    vim.notify('No active session, cannot set variable')
+    return
+  end
+  local view = context.view
+  if view and vim.bo.bufhidden == 'wipe' then
+    view.close()
+  end
+  local value = vim.fn.input(string.format('New `%s` value: ', item.name))
+  local params = {
+    variablesReference = item.variablesReference,
+    name = item.name,
+    value = value,
+  }
+  session:request('setVariable', params, function(err)
+    if err then
+      vim.notify(err.message, vim.log.levels.WARN)
+    else
+      session:_request_scopes(session.current_frame)
+    end
+  end)
+end
+
+
 local function set_expression(_, item, _, context)
   local session = require('dap').session()
   if not session then
@@ -102,7 +128,7 @@ local function set_expression(_, item, _, context)
     return
   end
   local view = context.view
-  if view then
+  if view and vim.bo.bufhidden == 'wipe' then
     view.close()
   end
   local value = vim.fn.input(string.format('New `%s` expression: ', item.name))
@@ -135,6 +161,8 @@ variable.tree_spec = {
     local item = info.item
     if item.evaluateName and capabilities.supportsSetExpression then
       table.insert(result, { label = 'Set expression', fn = set_expression, })
+    elseif capabilities.supportsSetVariable then
+      table.insert(result, { label = 'Set variable', fn = set_variable, })
     end
     return result
   end
