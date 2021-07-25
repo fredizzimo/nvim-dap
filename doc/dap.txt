@@ -718,6 +718,12 @@ View the value for the expression under the cursor in a floating window:
 <
 
 
+The widgets may have the following custom mappings enabled:
+
+- `<CR>` to show a menu with available actions
+- `o` to expand or collapse an entry
+
+
 Available widgets entities:
 
 - scopes

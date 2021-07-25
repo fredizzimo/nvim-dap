@@ -5,7 +5,10 @@ local M = {}
 
 local function new_buf()
   local buf = api.nvim_create_buf(false, true)
+  api.nvim_buf_set_option(buf, 'modifiable', false)
   api.nvim_buf_set_option(buf, 'buftype', 'nofile')
+  api.nvim_buf_set_keymap(
+    buf, "n", "o", "<Cmd>lua require('dap.ui').trigger_actions({ filter = 'Expand' })<CR>", {})
   api.nvim_buf_set_keymap(
     buf, "n", "<CR>", "<Cmd>lua require('dap.ui').trigger_actions()<CR>", {})
   api.nvim_buf_set_keymap(
