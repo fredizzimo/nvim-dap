@@ -287,7 +287,8 @@ local function jump_to_frame(cur_session, frame, preserve_focus_hint)
     if scheme then
       bufnr = vim.uri_to_bufnr(source.path)
     else
-      bufnr = vim.uri_to_bufnr(vim.uri_from_fname(source.path))
+      local fname = cur_session.remote_to_local_path(source.path)
+      bufnr = vim.uri_to_bufnr(vim.uri_from_fname(fname))
     end
     vim.fn.bufload(bufnr)
     jump_to_location(bufnr, frame.line, frame.column)
@@ -480,7 +481,7 @@ do
       local path = api.nvim_buf_get_name(bufnr)
       local payload = {
         source = {
-          path = path;
+          path = self.local_to_remote_path(path);
           name = vim.fn.fnamemodify(path, ':t')
         };
         breakpoints = buf_bps;
@@ -636,6 +637,18 @@ local function session_defaults(adapter, opts)
     default_reverse_request_handlers,
     adapter.reverse_request_handlers or {}
   )
+  local local_to_remote_path
+  local remote_to_local_path
+  if adapter.localToRemotePath ~= nil then
+    local_to_remote_path = adapter.localToRemotePath
+  else
+    local_to_remote_path = function(path) return path end
+  end
+  if adapter.remoteToLocalPath ~= nil then
+    remote_to_local_path = adapter.remoteToLocalPath
+  else
+    remote_to_local_path = function(path) return path end
+  end
   return {
     handlers = handlers;
     message_callbacks = {};
@@ -645,6 +658,8 @@ local function session_defaults(adapter, opts)
     stopped_thread_id = nil;
     current_frame = nil;
     threads = {};
+    local_to_remote_path = local_to_remote_path;
+    remote_to_local_path = remote_to_local_path;
   }
 end
 
